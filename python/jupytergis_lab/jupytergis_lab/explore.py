@@ -19,17 +19,21 @@ def explore(
     if fresh_doc:
         Path(filename).unlink(missing_ok=True)
 
-    doc = GISDocument(filename)
+    # FIXME: The document opens as intended, but the file has no contents and any
+    #        updates performed result in no update to the file.
+    doc = GISDocument(filename, open=True)
 
     # TODO: Basemap choices
+    # TODO: Get basemap string from import
     doc.add_raster_layer(
         "https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}"
     )
 
-    # TODO: Support lots of file types, and support Python objects like geodataframes.
+    # TODO: Support all JGIS file types
+    # TODO: Support Python objects like geodataframes, dataarrays, etc.
     doc.add_geojson_layer(str(geojson_path))
 
     # TODO: Zoom to layer; is that feasible to do from Python? Currently not exposed in
-    #       Python API.
-    # FIXME: The document opens as intended, but the file has no contents and any
-    #        updates performed result in no update to the file.
+    #       Python API. Add e.g. `doc.add_geojson_layer(..., zoom_to=True)`
+    #       How can we send this message to the JS side in the existing architecture? I
+    #       think we need explicit comms.

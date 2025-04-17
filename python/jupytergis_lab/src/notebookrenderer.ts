@@ -123,7 +123,7 @@ export const notebookRendererPlugin: JupyterFrontEndPlugin<void> = {
     externalCommandRegistry?: IJGISExternalCommandRegistry,
     jgisTracker?: JupyterGISTracker,
     yWidgetManager?: IJupyterYWidgetManager,
-    drive?: ICollaborativeDrive
+    drive?: ICollaborativeDrive,
   ): void => {
     if (!yWidgetManager) {
       console.error('Missing IJupyterYWidgetManager token!');
@@ -134,7 +134,7 @@ export const notebookRendererPlugin: JupyterFrontEndPlugin<void> = {
       protected async initialize(commMetadata: {
         [key: string]: any;
       }): Promise<void> {
-        const { path, format, contentType } = commMetadata;
+        const { path, open, format, contentType } = commMetadata;
         const fileFormat = format as Contents.FileFormat;
 
         if (!drive) {
@@ -193,6 +193,26 @@ export const notebookRendererPlugin: JupyterFrontEndPlugin<void> = {
 
         this.ydoc = this.jupyterGISModel.sharedModel.ydoc;
         this.sharedModel = new JupyterYDoc(commMetadata, this.ydoc);
+
+        if (open) {
+          // FIXME: Opens a new window and loads JupyterGIS, but not synced
+          // with file. The map is blank, even if the file has 2 layers. Any
+          // updates made to the opened document will not reflect in the file.
+          app.commands.execute('docmanager:open', {
+            path: localPath,
+            options: {
+              mode: 'split-right',
+            },
+          });
+          // Behaves the same as above (but need to add IDocumentManager to
+          // plugin's activate signature):
+          // docManager.open(
+          //   localPath,
+          //   'JupyterGIS .jgis Viewer',
+          //   undefined,
+          //   {mode: 'split-right'},
+          // );
+        }
       }
     }
 

@@ -43,14 +43,14 @@ class GISDocument(CommWidget):
     """
     Create a new GISDocument object.
 
-    :param path: the path to the file that you would like to open. If not provided, a new empty document will be created.
+    :param path: the path to the file that you would like to open.
+    :param open: open the new document in a new JupyterLab window.
     """
-
-    path: Optional[Path]
 
     def __init__(
         self,
         path: Optional[str | Path] = None,
+        open: bool = False,
         latitude: Optional[float] = None,
         longitude: Optional[float] = None,
         zoom: Optional[float] = None,
@@ -59,17 +59,16 @@ class GISDocument(CommWidget):
         pitch: Optional[float] = None,
         projection: Optional[str] = None,
     ):
-        if isinstance(path, str):
-            path = Path(path)
-
-        self.path = path
-
-        comm_metadata = GISDocument._path_to_comm(str(self.path) if self.path else None)
+        if isinstance(path, Path):
+            path = str(path)
 
         ydoc = Doc()
 
         super().__init__(
-            comm_metadata=dict(ymodel_name="@jupytergis:widget", **comm_metadata),
+            comm_metadata={
+                "ymodel_name": "@jupytergis:widget",
+                **self._make_comm(path=path, open=open),
+            },
             ydoc=ydoc,
         )
 
@@ -733,13 +732,11 @@ class GISDocument(CommWidget):
         return _id
 
     @classmethod
-    def _path_to_comm(cls, filePath: Optional[str]) -> Dict:
-        path = None
+    def _make_comm(cls, *, path: Optional[str], open: bool = False) -> Dict:
         format = None
         contentType = None
 
-        if filePath is not None:
-            path = filePath
+        if path is not None:
             file_name = Path(path).name
             try:
                 ext = file_name.split(".")[1].lower()
@@ -757,8 +754,13 @@ class GISDocument(CommWidget):
                 contentType = "QGS"
             else:
                 raise ValueError("File extension is not supported!")
+
         return dict(
-            path=path, format=format, contentType=contentType, create_ydoc=path is None
+            path=path,
+            open=open,
+            format=format,
+            contentType=contentType,
+            create_ydoc=path is None,
         )
 
     def to_py(self) -> dict:
