@@ -12,3 +12,10 @@
   - This could be caused by having a JupyterLab instance already running at port
     `:8888`. Please ensure that there is nothing running at <http://localhost:8888/lab>
     before running tests.
+
+- Build errors occur locally on `main` that don't occur in CI, and I don't have any
+  changes (i.e. `git status` is clean).
+
+  - This sometimes happens, and we don't know why yet! Try creating a new worktree (`git
+    worktree add clean-worktree`) and testing there. Your options include: Fresh clone,
+    ...
