@@ -48,7 +48,7 @@ export class DissolveForm extends BaseForm {
     }
 
     const sourceData = source.parameters as IGeoJSONSource;
-    if (!sourceData?.path) {
+    if (!sourceData.path) {
       return;
     }
 

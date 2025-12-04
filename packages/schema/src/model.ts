@@ -202,11 +202,11 @@ export class JupyterGISModel implements IJupyterGISModel {
   }
 
   get currentUserId(): number | undefined {
-    return this.sharedModel?.awareness.clientID;
+    return this.sharedModel.awareness.clientID;
   }
 
   get users(): IUserData[] {
-    this._usersMap = this._sharedModel?.awareness.getStates();
+    this._usersMap = this._sharedModel.awareness.getStates();
     const users: IUserData[] = [];
     if (this._usersMap) {
       this._usersMap.forEach((val, key) => {
@@ -538,7 +538,7 @@ export class JupyterGISModel implements IJupyterGISModel {
   }
 
   get selected(): { [key: string]: ISelection } | undefined {
-    return this.localState?.selected?.value;
+    return this.localState?.selected.value;
   }
 
   set selected(value: { [key: string]: ISelection } | undefined) {

@@ -47,7 +47,7 @@ export const LayersBodyComponent: React.FC<IBodyProps> = props => {
   const model = props.model;
 
   const [layerTree, setLayerTree] = useState<IJGISLayerTree>(
-    model?.getLayerTree() || [],
+    model.getLayerTree() || [],
   );
 
   const notifyCommands = () => {
@@ -87,7 +87,7 @@ export const LayersBodyComponent: React.FC<IBodyProps> = props => {
 
     // Element has been dropped in the empty zone below the tree.
     if (dragOverElement === null) {
-      model?.moveItemsToGroup([draggedId], '', 0);
+      model.moveItemsToGroup([draggedId], '', 0);
       return;
     }
 
@@ -102,11 +102,11 @@ export const LayersBodyComponent: React.FC<IBodyProps> = props => {
       dragOverElement.classList.contains(LAYER_GROUP_HEADER_CLASS) &&
       dragOverPosition === 'below'
     ) {
-      model?.moveItemsToGroup([draggedId], dragOverId);
+      model.moveItemsToGroup([draggedId], dragOverId);
       return;
     }
 
-    model?.moveItemRelatedTo(
+    model.moveItemRelatedTo(
       draggedId,
       dragOverId,
       dragOverPosition === 'above',
@@ -150,7 +150,7 @@ export const LayersBodyComponent: React.FC<IBodyProps> = props => {
     } else {
       // Check if new selection is the same type as previous selections
       const isSelectedSameType = Object.values(selectedValue).some(
-        selection => (selection as ISelection).type === type,
+        selection => selection.type === type,
       );
 
       if (!isSelectedSameType) {
@@ -186,15 +186,15 @@ export const LayersBodyComponent: React.FC<IBodyProps> = props => {
    */
   useEffect(() => {
     const updateLayers = () => {
-      setLayerTree(model?.getLayerTree() || []);
+      setLayerTree(model.getLayerTree() || []);
     };
-    model?.sharedModel.layersChanged.connect(updateLayers);
-    model?.sharedModel.layerTreeChanged.connect(updateLayers);
+    model.sharedModel.layersChanged.connect(updateLayers);
+    model.sharedModel.layerTreeChanged.connect(updateLayers);
 
     updateLayers();
     return () => {
-      model?.sharedModel.layersChanged.disconnect(updateLayers);
-      model?.sharedModel.layerTreeChanged.disconnect(updateLayers);
+      model.sharedModel.layersChanged.disconnect(updateLayers);
+      model.sharedModel.layerTreeChanged.disconnect(updateLayers);
     };
   }, [model]);
 
@@ -247,8 +247,8 @@ const LayerGroupComponent: React.FC<ILayerGroupProps> = props => {
 
   const [id, setId] = useState('');
   const [open, setOpen] = useState<boolean>(false);
-  const name = group?.name ?? 'Undefined group';
-  const layers = group?.layers ?? [];
+  const name = group.name ?? 'Undefined group';
+  const layers = group.layers ?? [];
   const [selected, setSelected] = useState<boolean>(
     // TODO Support multi-selection as `model?.jGISModel?.localState?.selected.value` does
     isSelected(group.name, gisModel),
@@ -262,7 +262,7 @@ const LayerGroupComponent: React.FC<ILayerGroupProps> = props => {
       const groupState = await state.fetch(`jupytergis:${group.name}`);
 
       setOpen(
-        ((groupState as ReadonlyPartialJSONObject)?.expanded as boolean) ??
+        ((groupState as ReadonlyPartialJSONObject).expanded as boolean) ??
           false,
       );
     };
@@ -431,8 +431,8 @@ interface ILayerProps {
 
 function isSelected(layerId: string, model: IJupyterGISModel | undefined) {
   return (
-    (model?.localState?.selected?.value &&
-      Object.keys(model?.localState?.selected?.value).includes(layerId)) ||
+    (model?.localState?.selected.value &&
+      Object.keys(model.localState.selected.value).includes(layerId)) ||
     false
   );
 }
@@ -522,7 +522,7 @@ const LayerComponent: React.FC<ILayerProps> = props => {
    */
   const toggleVisibility = () => {
     layer.visible = !layer.visible;
-    gisModel?.sharedModel?.updateLayer(layerId, layer);
+    gisModel?.sharedModel.updateLayer(layerId, layer);
   };
 
   const setSelection = (event: ReactMouseEvent<HTMLElement>) => {

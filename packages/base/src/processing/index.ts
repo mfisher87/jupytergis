@@ -108,7 +108,7 @@ export async function processSelectedLayer(
   }
 
   const model = tracker.currentWidget.model;
-  const sources = model?.sharedModel.sources ?? {};
+  const sources = model.sharedModel.sources ?? {};
 
   const geojsonString = await getLayerGeoJSON(selected, sources, model);
   if (!geojsonString) {
@@ -119,7 +119,7 @@ export async function processSelectedLayer(
     ...(formSchemaRegistry.getSchemas().get(processingType) as IDict),
   };
   const selectedLayerId = Object.keys(
-    model?.sharedModel.awareness.getLocalState()?.selected?.value || {},
+    model.sharedModel.awareness.getLocalState()?.selected?.value || {},
   )[0];
 
   // Open ProcessingFormDialog

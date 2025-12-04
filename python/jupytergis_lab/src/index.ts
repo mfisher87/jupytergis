@@ -241,7 +241,7 @@ function buildGroupsMenu(
     return;
   }
 
-  const model = tracker.currentWidget?.model;
+  const model = tracker.currentWidget.model;
 
   const submenu =
     contextMenu.menu.items.find(

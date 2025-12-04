@@ -60,7 +60,7 @@ function getVectorTileProperties({
   const features = model.getFeaturesForCurrentTile({ sourceId });
 
   features.forEach(feature => {
-    const props = feature.getProperties?.();
+    const props = feature.getProperties();
     if (props) {
       for (const [key, value] of Object.entries(props)) {
         if (!result[key]) {
@@ -97,7 +97,7 @@ export const useGetProperties = ({
         throw new Error('Source not found');
       }
 
-      const sourceType = source?.type;
+      const sourceType = source.type;
       let result: Record<string, Set<any>> = {};
 
       if (sourceType === 'GeoJSONSource') {

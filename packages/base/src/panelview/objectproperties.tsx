@@ -38,10 +38,8 @@ export class ObjectPropertiesReact extends React.Component<IProps, IStates> {
       this._onClientSharedStateChanged,
     );
 
-    this.props.model?.sharedLayersChanged.connect(this._sharedJGISModelChanged);
-    this.props.model?.sharedSourcesChanged.connect(
-      this._sharedJGISModelChanged,
-    );
+    this.props.model.sharedLayersChanged.connect(this._sharedJGISModelChanged);
+    this.props.model.sharedSourcesChanged.connect(this._sharedJGISModelChanged);
   }
 
   private _sharedJGISModelChanged = (): void => {
@@ -58,9 +56,9 @@ export class ObjectPropertiesReact extends React.Component<IProps, IStates> {
     const localState = clientId ? clients.get(clientId) : null;
     if (
       localState &&
-      localState.selected?.emitter &&
+      localState.selected.emitter &&
       localState.selected.emitter !== this.state.id &&
-      localState.selected?.value
+      localState.selected.value
     ) {
       newState = localState;
     }

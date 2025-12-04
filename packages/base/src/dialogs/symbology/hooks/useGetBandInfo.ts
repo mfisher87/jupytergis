@@ -31,7 +31,7 @@ const useGetBandInfo = (model: IJupyterGISModel, layer: IJGISLayer) => {
 
     try {
       const bandsArr: IBandRow[] = [];
-      const source = model.getSource(layer?.parameters?.source);
+      const source = model.getSource(layer.parameters?.source);
       const sourceInfo = source?.parameters?.urls[0];
 
       if (!sourceInfo?.url) {

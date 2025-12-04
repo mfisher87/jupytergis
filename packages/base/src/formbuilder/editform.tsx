@@ -55,8 +55,8 @@ export class EditForm extends React.Component<IEditFormProps, any> {
         return;
       }
 
-      LayerForm = getLayerTypeForm(layer?.type || 'RasterLayer');
-      layerData = deepCopy(layer?.parameters || {});
+      LayerForm = getLayerTypeForm(layer.type || 'RasterLayer');
+      layerData = deepCopy(layer.parameters || {});
       layerSchema = deepCopy(
         this.props.formSchemaRegistry.getSchemas().get(layer.type),
       );
@@ -77,8 +77,8 @@ export class EditForm extends React.Component<IEditFormProps, any> {
         return;
       }
 
-      SourceForm = getSourceTypeForm(source?.type || 'RasterSource');
-      sourceData = deepCopy(source?.parameters || {});
+      SourceForm = getSourceTypeForm(source.type || 'RasterSource');
+      sourceData = deepCopy(source.parameters || {});
       sourceSchema = deepCopy(
         this.props.formSchemaRegistry.getSchemas().get(source.type),
       );

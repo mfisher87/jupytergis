@@ -298,7 +298,7 @@ const Graduated: React.FC<ISymbologyTabbedDialogWithAttributesProps> = ({
   };
 
   const body = (() => {
-    if (Object.keys(selectableAttributesAndValues)?.length === 0) {
+    if (Object.keys(selectableAttributesAndValues).length === 0) {
       return (
         <p className="errors">
           This symbology type is not available; no attributes contain numeric

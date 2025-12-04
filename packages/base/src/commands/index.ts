@@ -225,7 +225,7 @@ export function addCommands(
         return false;
       }
 
-      const selectedLayers = model.localState?.selected?.value;
+      const selectedLayers = model.localState?.selected.value;
       if (!selectedLayers) {
         return false;
       }
@@ -547,7 +547,7 @@ export function addCommands(
       const model = tracker.currentWidget?.model;
       const groupName = args['label'] as string;
 
-      const selectedLayers = model?.localState?.selected?.value;
+      const selectedLayers = model?.localState?.selected.value;
 
       if (!selectedLayers) {
         return;
@@ -561,7 +561,7 @@ export function addCommands(
     label: trans.__('Move Selected Layers to New Group'),
     execute: async () => {
       const model = tracker.currentWidget?.model;
-      const selectedLayers = model?.localState?.selected?.value;
+      const selectedLayers = model?.localState?.selected.value;
 
       if (!selectedLayers) {
         return;
@@ -659,7 +659,7 @@ export function addCommands(
     },
     isToggled: () => {
       if (tracker.currentWidget instanceof JupyterGISDocumentWidget) {
-        return tracker.currentWidget?.content.consoleOpened === true;
+        return tracker.currentWidget.content.consoleOpened === true;
       } else {
         return false;
       }
@@ -854,10 +854,10 @@ export function addCommands(
       try {
         const settings = await current.model.getSettings();
         const currentValue =
-          settings?.composite?.leftPanelDisabled ??
+          settings.composite.leftPanelDisabled ??
           current.model.jgisSettings.leftPanelDisabled ??
           false;
-        await settings?.set('leftPanelDisabled', !currentValue);
+        await settings.set('leftPanelDisabled', !currentValue);
         commands.notifyCommandChanged(CommandIDs.toggleLeftPanel);
       } catch (err) {
         console.error('Failed to toggle Left Panel:', err);
@@ -881,10 +881,10 @@ export function addCommands(
       try {
         const settings = await current.model.getSettings();
         const currentValue =
-          settings?.composite?.rightPanelDisabled ??
+          settings.composite.rightPanelDisabled ??
           current.model.jgisSettings.rightPanelDisabled ??
           false;
-        await settings?.set('rightPanelDisabled', !currentValue);
+        await settings.set('rightPanelDisabled', !currentValue);
         commands.notifyCommandChanged(CommandIDs.toggleRightPanel);
       } catch (err) {
         console.error('Failed to toggle Right Panel:', err);
@@ -907,10 +907,10 @@ export function addCommands(
       }
       const settings = await current.model.getSettings();
       const currentValue =
-        settings?.composite?.layersDisabled ??
+        settings.composite.layersDisabled ??
         current.model.jgisSettings.layersDisabled ??
         false;
-      await settings?.set('layersDisabled', !currentValue);
+      await settings.set('layersDisabled', !currentValue);
       commands.notifyCommandChanged(CommandIDs.showLayersTab);
     },
   });
@@ -929,10 +929,10 @@ export function addCommands(
       }
       const settings = await current.model.getSettings();
       const currentValue =
-        settings?.composite?.stacBrowserDisabled ??
+        settings.composite.stacBrowserDisabled ??
         current.model.jgisSettings.stacBrowserDisabled ??
         false;
-      await settings?.set('stacBrowserDisabled', !currentValue);
+      await settings.set('stacBrowserDisabled', !currentValue);
       commands.notifyCommandChanged(CommandIDs.showStacBrowserTab);
     },
   });
@@ -951,10 +951,10 @@ export function addCommands(
       }
       const settings = await current.model.getSettings();
       const currentValue =
-        settings?.composite?.filtersDisabled ??
+        settings.composite.filtersDisabled ??
         current.model.jgisSettings.filtersDisabled ??
         false;
-      await settings?.set('filtersDisabled', !currentValue);
+      await settings.set('filtersDisabled', !currentValue);
       commands.notifyCommandChanged(CommandIDs.showFiltersTab);
     },
   });
@@ -974,10 +974,10 @@ export function addCommands(
       }
       const settings = await current.model.getSettings();
       const currentValue =
-        settings?.composite?.objectPropertiesDisabled ??
+        settings.composite.objectPropertiesDisabled ??
         current.model.jgisSettings.objectPropertiesDisabled ??
         false;
-      await settings?.set('objectPropertiesDisabled', !currentValue);
+      await settings.set('objectPropertiesDisabled', !currentValue);
       commands.notifyCommandChanged(CommandIDs.showObjectPropertiesTab);
     },
   });
@@ -996,10 +996,10 @@ export function addCommands(
       }
       const settings = await current.model.getSettings();
       const currentValue =
-        settings?.composite?.annotationsDisabled ??
+        settings.composite.annotationsDisabled ??
         current.model.jgisSettings.annotationsDisabled ??
         false;
-      await settings?.set('annotationsDisabled', !currentValue);
+      await settings.set('annotationsDisabled', !currentValue);
       commands.notifyCommandChanged(CommandIDs.showAnnotationsTab);
     },
   });
@@ -1018,10 +1018,10 @@ export function addCommands(
       }
       const settings = await current.model.getSettings();
       const currentValue =
-        settings?.composite?.identifyDisabled ??
+        settings.composite.identifyDisabled ??
         current.model.jgisSettings.identifyDisabled ??
         false;
-      await settings?.set('identifyDisabled', !currentValue);
+      await settings.set('identifyDisabled', !currentValue);
       commands.notifyCommandChanged(CommandIDs.showIdentifyPanelTab);
     },
   });
@@ -1136,7 +1136,7 @@ namespace Private {
     itemTypeToRemove: SelectionType,
     removeFunction: (id: string) => void,
   ) {
-    const selected = model?.localState?.selected?.value;
+    const selected = model?.localState?.selected.value;
 
     if (!selected) {
       console.error('Failed to remove selected item -- nothing selected');

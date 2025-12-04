@@ -26,13 +26,13 @@ const StatusBar: React.FC<IStatusBarProps> = ({
 
   useEffect(() => {
     const handleClientStateChanged = () => {
-      const pointer = jgisModel?.localState?.pointer?.value;
+      const pointer = jgisModel.localState?.pointer.value;
 
       if (!pointer) {
         return;
       }
 
-      setCoords({ x: pointer?.coordinates.x, y: pointer?.coordinates.y });
+      setCoords({ x: pointer.coordinates.x, y: pointer.coordinates.y });
     };
 
     jgisModel.clientStateChanged.connect(handleClientStateChanged);

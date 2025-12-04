@@ -27,44 +27,44 @@ const FilterComponent: React.FC<IFilterComponentProps> = ({ model }) => {
 
   useEffect(() => {
     // Keep layer selected when widget changes
-    if (model?.localState?.selected?.value) {
-      setSelectedLayer(Object.keys(model?.localState?.selected?.value)[0]);
+    if (model.localState?.selected.value) {
+      setSelectedLayer(Object.keys(model.localState.selected.value)[0]);
     }
   }, []);
 
   useEffect(() => {
     const handleClientStateChanged = () => {
-      if (!model?.localState?.selected?.value) {
+      if (!model.localState?.selected.value) {
         return;
       }
 
       // TODO: handle multi select better
-      const currentLayer = Object.keys(model?.localState?.selected?.value)[0];
+      const currentLayer = Object.keys(model.localState.selected.value)[0];
       setSelectedLayer(currentLayer);
     };
 
     const handleSharedOptionsChanged = (_: any, keys: any) => {
       // model changes when current widget changes, don't want this to run in that case
       if (keys.has('zoom')) {
-        if (!model?.localState?.selected?.value) {
+        if (!model.localState?.selected.value) {
           return;
         }
-        const currentLayer = Object.keys(model?.localState?.selected?.value)[0];
+        const currentLayer = Object.keys(model.localState.selected.value)[0];
 
         // TODO: Probably want to debounce/throttle here
         buildFilterDebounce(currentLayer);
       }
     };
 
-    model?.clientStateChanged.connect(handleClientStateChanged);
+    model.clientStateChanged.connect(handleClientStateChanged);
 
     // Want to rebuild filter object when zoom changes to get values for that zoom level
     // This is because the filtering inputs may depend on the currently visible features
-    model?.sharedOptionsChanged.connect(handleSharedOptionsChanged);
+    model.sharedOptionsChanged.connect(handleSharedOptionsChanged);
 
     return () => {
-      model?.clientStateChanged.disconnect(handleClientStateChanged);
-      model?.sharedOptionsChanged.disconnect(handleSharedOptionsChanged);
+      model.clientStateChanged.disconnect(handleClientStateChanged);
+      model.sharedOptionsChanged.disconnect(handleSharedOptionsChanged);
     };
   }, [model]);
 
@@ -72,7 +72,7 @@ const FilterComponent: React.FC<IFilterComponentProps> = ({ model }) => {
     // Reset filter stuff for new layer
     setFeaturesInLayer({});
 
-    const layer = model?.getLayer(selectedLayer);
+    const layer = model.getLayer(selectedLayer);
 
     if (!layer || layer.type !== 'VectorLayer') {
       setShouldDisplay(false);
@@ -189,7 +189,7 @@ const FilterComponent: React.FC<IFilterComponentProps> = ({ model }) => {
   };
 
   const updateLayerFilters = (filters: IJGISFilterItem[], op?: string) => {
-    const layer = model?.getLayer(selectedLayer);
+    const layer = model.getLayer(selectedLayer);
     if (!layer) {
       return;
     }
@@ -198,7 +198,7 @@ const FilterComponent: React.FC<IFilterComponentProps> = ({ model }) => {
       logicalOp: op ?? logicalOp,
       appliedFilters: filters,
     };
-    model?.sharedModel.updateLayer(selectedLayer, layer);
+    model.sharedModel.updateLayer(selectedLayer, layer);
   };
 
   return (

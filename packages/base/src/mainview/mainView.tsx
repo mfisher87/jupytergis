@@ -162,7 +162,7 @@ export class MainView extends React.Component<IProps, IStates> {
       const resizeObserver = new ResizeObserver(_ => {
         el.style.setProperty('width', '100%');
         el.style.setProperty('max-width', '100%');
-        el?.style.setProperty('left', '0px');
+        el.style.setProperty('left', '0px');
 
         setWidthOneHundred('#main-panel jp-toolbar');
         setWidthOneHundred('#main-panel .lm-SplitPanel ');
@@ -510,7 +510,7 @@ export class MainView extends React.Component<IProps, IStates> {
       hitTolerance: 5,
       multi: true,
       layers: layer => {
-        const localState = this._model?.sharedModel.awareness.getLocalState();
+        const localState = this._model.sharedModel.awareness.getLocalState();
         const selectedLayers = localState?.selected?.value;
 
         if (!selectedLayers) {
@@ -1240,7 +1240,7 @@ export class MainView extends React.Component<IProps, IStates> {
 
     const layerStyle = { ...defaultRules };
 
-    if (layer.filters?.logicalOp && layer.filters.appliedFilters?.length > 0) {
+    if (layer.filters?.logicalOp && layer.filters.appliedFilters.length > 0) {
       const buildCondition = (filter: IJGISFilterItem): any[] => {
         const base = [filter.operator, ['get', filter.feature]];
         return filter.operator === 'between'
@@ -1378,7 +1378,7 @@ export class MainView extends React.Component<IProps, IStates> {
       case 'WebGlLayer': {
         mapLayer.setOpacity(layer.parameters?.opacity);
 
-        if (layer?.parameters?.color) {
+        if (layer.parameters?.color) {
           (mapLayer as WebGlTileLayer).setStyle({
             color: layer.parameters.color,
           });
@@ -1412,7 +1412,7 @@ export class MainView extends React.Component<IProps, IStates> {
    * to work with the temporal controller
    */
   handleTemporalController = (id: string, layer: IJGISLayer) => {
-    const selectedLayer = this._model?.localState?.selected?.value;
+    const selectedLayer = this._model.localState?.selected.value;
 
     // Temporal Controller shouldn't be active if more than one layer is selected
     if (!selectedLayer || Object.keys(selectedLayer).length !== 1) {
@@ -1643,7 +1643,7 @@ export class MainView extends React.Component<IProps, IStates> {
         return;
       }
 
-      if (remoteState.user?.username !== this.state.remoteUser?.username) {
+      if (remoteState.user.username !== this.state.remoteUser?.username) {
         this.setState(old => ({
           ...old,
           remoteUser: remoteState.user,
@@ -1665,7 +1665,7 @@ export class MainView extends React.Component<IProps, IStates> {
           ...old,
           remoteUser: null,
         }));
-        const viewportState = localState.viewportState?.value;
+        const viewportState = localState.viewportState.value;
 
         if (viewportState) {
           this._moveToPosition(viewportState.coordinates, viewportState.zoom);
@@ -1675,11 +1675,11 @@ export class MainView extends React.Component<IProps, IStates> {
 
     // cursors
     clients.forEach((client, clientId) => {
-      if (!client?.user) {
+      if (!client.user) {
         return;
       }
 
-      const pointer = client.pointer?.value;
+      const pointer = client.pointer.value;
 
       // We already display our own cursor on mouse move
       if (this._model.getClientId() === clientId) {
@@ -2033,7 +2033,7 @@ export class MainView extends React.Component<IProps, IStates> {
     // The id is a layer
     let extent;
     const layer = this.getLayer(id);
-    const source = layer?.getSource();
+    const source = layer.getSource();
 
     if (source instanceof VectorSource) {
       extent = source.getExtent();
@@ -2156,7 +2156,7 @@ export class MainView extends React.Component<IProps, IStates> {
       return;
     }
 
-    const localState = this._model?.sharedModel.awareness.getLocalState();
+    const localState = this._model.sharedModel.awareness.getLocalState();
     const selectedLayer = localState?.selected?.value;
 
     if (!selectedLayer) {
@@ -2186,7 +2186,7 @@ export class MainView extends React.Component<IProps, IStates> {
           }
 
           const rawProps = feature.getProperties();
-          const fid = feature.getId?.() ?? rawProps?.fid;
+          const fid = feature.getId() ?? rawProps.fid;
 
           if (rawProps && Object.keys(rawProps).length > 1) {
             const { ...clean } = rawProps;

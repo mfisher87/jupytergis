@@ -76,7 +76,7 @@ const TemporalSlider: React.FC<ITemporalSliderProps> = ({
   useEffect(() => {
     // This is for when the selected layer changes
     const handleClientStateChanged = () => {
-      if (!model.localState?.selected?.value) {
+      if (!model.localState?.selected.value) {
         return;
       }
 

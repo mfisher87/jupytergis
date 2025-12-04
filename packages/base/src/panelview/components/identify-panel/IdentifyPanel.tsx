@@ -35,23 +35,23 @@ export const IdentifyPanelComponent: React.FC<IIdentifyComponentProps> = ({
       sender: IJupyterGISModel,
       clients: Map<number, IJupyterGISClientState>,
     ) => {
-      const remoteUserId = model?.localState?.remoteUser;
+      const remoteUserId = model.localState?.remoteUser;
 
       // If following a collaborator
       if (remoteUserId) {
         const remoteState = clients.get(remoteUserId);
         if (remoteState) {
-          if (remoteState.user?.username !== remoteUser?.username) {
+          if (remoteState.user.username !== remoteUser?.username) {
             setRemoteUser(remoteState.user);
           }
 
-          setFeatures(remoteState.identifiedFeatures?.value ?? {});
+          setFeatures(remoteState.identifiedFeatures.value ?? {});
         }
         return;
       }
 
       // If not following a collaborator
-      const identifiedFeatures = model?.localState?.identifiedFeatures?.value;
+      const identifiedFeatures = model.localState?.identifiedFeatures.value;
 
       if (!identifiedFeatures) {
         setFeatures({});
@@ -66,18 +66,18 @@ export const IdentifyPanelComponent: React.FC<IIdentifyComponentProps> = ({
       }
     };
 
-    model?.clientStateChanged.connect(handleClientStateChanged);
+    model.clientStateChanged.connect(handleClientStateChanged);
 
     return () => {
-      model?.clientStateChanged.disconnect(handleClientStateChanged);
+      model.clientStateChanged.disconnect(handleClientStateChanged);
     };
   }, [model]);
 
   const highlightFeatureOnMap = (feature: any) => {
-    model?.highlightFeatureSignal?.emit(feature);
+    model.highlightFeatureSignal.emit(feature);
 
     const geometry = feature.geometry || feature._geometry;
-    model?.flyToGeometrySignal?.emit(geometry);
+    model.flyToGeometrySignal.emit(geometry);
   };
 
   const toggleFeatureVisibility = (index: number) => {
@@ -103,7 +103,7 @@ export const IdentifyPanelComponent: React.FC<IIdentifyComponentProps> = ({
     <div
       className="jgis-identify-wrapper"
       style={{
-        border: model?.localState?.remoteUser
+        border: model.localState?.remoteUser
           ? `solid 3px ${remoteUser?.color}`
           : 'unset',
       }}

@@ -47,7 +47,7 @@ const FilterRow: React.FC<{
       return;
     }
 
-    const currentValue = valueSelect.options[valueSelect.selectedIndex]?.value;
+    const currentValue = valueSelect.options[valueSelect.selectedIndex].value;
     currentValue && onValueChange(currentValue);
   }, [selectedFeature]);
 

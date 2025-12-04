@@ -54,7 +54,7 @@ export const RightPanel: React.FC<IRightPanelProps> = props => {
 
       if (
         localState &&
-        localState.identifiedFeatures?.value &&
+        localState.identifiedFeatures.value &&
         localState.identifiedFeatures.value !== currentlyIdentifiedFeatures
       ) {
         currentlyIdentifiedFeatures = localState.identifiedFeatures.value;

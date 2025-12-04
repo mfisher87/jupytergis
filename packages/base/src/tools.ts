@@ -456,7 +456,7 @@ export const loadGeoTiff = async (
   model: IJupyterGISModel,
   file?: Contents.IModel | null,
 ) => {
-  if (!sourceInfo?.url) {
+  if (!sourceInfo.url) {
     return null;
   }
 

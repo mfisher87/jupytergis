@@ -53,7 +53,7 @@ const SymbologyDialog: React.FC<ISymbologyDialogProps> = ({
 
   useEffect(() => {
     const handleClientStateChanged = () => {
-      if (!model.localState?.selected?.value) {
+      if (!model.localState?.selected.value) {
         return;
       }
 
