@@ -12,9 +12,10 @@ export interface IBandRow {
     maximum: number;
   };
 }
+export type BandRows = ["UNSET", ...IBandRow[]];
 
 const useGetBandInfo = (model: IJupyterGISModel, layer: IJGISLayer) => {
-  const [bandRows, setBandRows] = useState<IBandRow[]>([]);
+  const [bandRows, setBandRows] = useState<BandRows>(["UNSET"]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,7 +60,7 @@ const useGetBandInfo = (model: IJupyterGISModel, layer: IJGISLayer) => {
       const image = await tiff.getImage();
       const numberOfBands = image.getSamplesPerPixel();
 
-      const bandsArr: IBandRow[] = [];
+      const bandsArr: BandRows = ["UNSET"];
       for (let i = 0; i < numberOfBands; i++) {
         bandsArr.push({
           // IMPORTANT: Bands are 1-indexed; this matches the output of `gdalinfo`.

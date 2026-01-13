@@ -10,7 +10,7 @@ import ColorRampControls, {
 } from '@/src/dialogs/symbology/components/color_ramp/ColorRampControls';
 import StopRow from '@/src/dialogs/symbology/components/color_stops/StopRow';
 import useGetBandInfo, {
-  IBandRow,
+  BandRows,
 } from '@/src/dialogs/symbology/hooks/useGetBandInfo';
 import {
   IStopRow,
@@ -52,6 +52,7 @@ const SingleBandPseudoColor: React.FC<ISymbologyDialogProps> = ({
 
   const [layerState, setLayerState] = useState<ReadonlyJSONObject>();
   const [selectedBand, setSelectedBand] = useState(1);
+  const [selectedBandRow, setSelectedBandRow] = useState<typeof bandRows[number]>();
   const [stopRows, setStopRows] = useState<IStopRow[]>([]);
   const [selectedFunction, setSelectedFunction] =
     useState<InterpolationType>('linear');
@@ -60,7 +61,8 @@ const SingleBandPseudoColor: React.FC<ISymbologyDialogProps> = ({
   >();
 
   const stopRowsRef = useRef<IStopRow[]>();
-  const bandRowsRef = useRef<IBandRow[]>([]);
+  // const bandRowsRef = useRef<BandRows>(["UNSET"]);
+  const bandRowsRef = useRef<BandRows>();
   const selectedFunctionRef = useRef<InterpolationType>();
   const colorRampOptionsRef = useRef<ColorRampControlsOptions | undefined>();
   const selectedBandRef = useRef<number>();
@@ -90,6 +92,14 @@ const SingleBandPseudoColor: React.FC<ISymbologyDialogProps> = ({
     colorRampOptionsRef.current = colorRampOptions;
     selectedBandRef.current = selectedBand;
   }, [stopRows, selectedFunction, colorRampOptions, selectedBand, layerState]);
+
+  useEffect(() => {
+    setSelectedBandRow(bandRows[selectedBand]);
+  }, [selectedBand, bandRows]);
+
+  if (selectedBandRow === 'UNSET' || selectedBandRow === undefined) {
+    throw Error(`Invalid value for selectedBandRow: ${selectedBandRow}`);
+  }
 
   const populateOptions = async () => {
     const layerState = (await stateDb?.fetch(
@@ -164,11 +174,6 @@ const SingleBandPseudoColor: React.FC<ISymbologyDialogProps> = ({
   };
 
   const handleOk = () => {
-    // Update source
-    const bandRow = bandRowsRef.current[selectedBand - 1];
-    if (!bandRow) {
-      return;
-    }
     const sourceId = layer.parameters?.source;
     const source = model.getSource(sourceId);
 
@@ -179,8 +184,8 @@ const SingleBandPseudoColor: React.FC<ISymbologyDialogProps> = ({
     const isQuantile = colorRampOptionsRef.current?.selectedMode === 'quantile';
 
     const sourceInfo = source.parameters.urls[0];
-    sourceInfo.min = bandRow.stats.minimum;
-    sourceInfo.max = bandRow.stats.maximum;
+    sourceInfo.min = selectedBandRow.stats.minimum;
+    sourceInfo.max = selectedBandRow.stats.maximum;
 
     source.parameters.urls[0] = sourceInfo;
 
@@ -302,7 +307,6 @@ const SingleBandPseudoColor: React.FC<ISymbologyDialogProps> = ({
 
     let stops: number[] = [];
 
-    const currentBand = bandRows[selectedBand - 1];
     const source = model.getSource(layer?.parameters?.source);
     const sourceInfo = source?.parameters?.urls[0];
     const nClasses = selectedMode === 'continuous' ? 52 : numberOfShades;
@@ -320,16 +324,16 @@ const SingleBandPseudoColor: React.FC<ISymbologyDialogProps> = ({
       case 'continuous':
         stops = GeoTiffClassifications.classifyContinuousBreaks(
           nClasses,
-          currentBand.stats.minimum,
-          currentBand.stats.maximum,
+          selectedBandRow.stats.minimum,
+          selectedBandRow.stats.maximum,
           selectedFunction,
         );
         break;
       case 'equal interval':
         stops = GeoTiffClassifications.classifyEqualIntervalBreaks(
           nClasses,
-          currentBand.stats.minimum,
-          currentBand.stats.maximum,
+          selectedBandRow.stats.minimum,
+          selectedBandRow.stats.maximum,
           selectedFunction,
         );
         break;
@@ -349,23 +353,15 @@ const SingleBandPseudoColor: React.FC<ISymbologyDialogProps> = ({
   };
 
   const scaleValue = (bandValue: number, isQuantile: boolean) => {
-    const currentBand = bandRows[selectedBand - 1];
-
-    if (!currentBand) {
-      return bandValue;
-    }
-
-    const min = isQuantile ? 1 : currentBand.stats.minimum;
-    const max = isQuantile ? 65535 : currentBand.stats.maximum;
+    const min = isQuantile ? 1 : selectedBandRow.stats.minimum;
+    const max = isQuantile ? 65535 : selectedBandRow.stats.maximum;
 
     return (bandValue * (max - min)) / (1 - 0) + min;
   };
 
   const unscaleValue = (value: number, isQuantile: boolean) => {
-    const currentBand = bandRowsRef.current[selectedBand - 1];
-
-    const min = isQuantile ? 1 : currentBand.stats.minimum;
-    const max = isQuantile ? 65535 : currentBand.stats.maximum;
+    const min = isQuantile ? 1 : selectedBandRow.stats.minimum;
+    const max = isQuantile ? 65535 : selectedBandRow.stats.maximum;
 
     return (value * (1 - 0) - min * (1 - 0)) / (max - min);
   };
@@ -376,9 +372,8 @@ const SingleBandPseudoColor: React.FC<ISymbologyDialogProps> = ({
         <LoadingOverlay loading={loading} />
         <BandRow
           label="Band"
-          // Band numbers are 1 indexed
-          index={selectedBand - 1}
-          bandRow={bandRows[selectedBand - 1]}
+          index={selectedBand}
+          bandRow={selectedBandRow}
           bandRows={bandRows}
           setSelectedBand={setSelectedBand}
           setBandRows={setBandRows}
