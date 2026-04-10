@@ -7,9 +7,4 @@ jupyter-collaboration-ui>=2,<3
 jupyter-docprovider>=2,<3
 jupyter-server-ydoc>=2,<3
 jupyterlab>=4.5.1
-mercantile>=1.2
-pillow>=10
 pip-run
-pydantic>=2.4.2,<3
-ruff>=0.6
-xyzservices>=2024.6.0
