@@ -7,4 +7,4 @@ jupyter-collaboration-ui>=2,<3
 jupyter-docprovider>=2,<3
 jupyter-server-ydoc>=2,<3
 jupyterlab>=4.5.1
-pip-run
+uv
