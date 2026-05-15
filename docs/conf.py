@@ -37,6 +37,9 @@ language = "en"
 jupyterlite_contents = [
     "../examples",
 ]
+jupyterlite_ignore_contents = [
+    r"\.\./examples/tiler-.*",
+]
 jupyterlite_dir = "."
 jupyterlite_config = "jupyter_lite_config.json"
 jupyterlite_silence = False
