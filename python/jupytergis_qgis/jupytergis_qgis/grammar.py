@@ -28,6 +28,7 @@ from qgis.core import (  # type: ignore[import-untyped]
     QgsRasterBandStats,
     QgsRasterShader,
     QgsSingleBandPseudoColorRenderer,
+    QgsSymbol,
     QgsVectorTileBasicRendererStyle,
 )
 from qgis.PyQt import sip
@@ -523,7 +524,7 @@ def grammar_layer_alpha_factor(grammar_layer: dict[str, Any]) -> float:
     return 1.0
 
 
-def _heatmap_color_ramp(grammar_layer):
+def _heatmap_color_ramp(grammar_layer: dict[str, Any]) -> QgsGradientColorRamp | None:
     """A QGIS heatmap gradient from the layer's colorRamp scale, or None.
 
     Only the first stop (density 0) is transparent; every other stop is fully
@@ -559,7 +560,7 @@ def _heatmap_color_ramp(grammar_layer):
     return None
 
 
-def _heatmap_renderer(grammar_layer):
+def _heatmap_renderer(grammar_layer: dict[str, Any]) -> QgsHeatmapRenderer:
     """Map a KDE preprocess transform to a QgsHeatmapRenderer (points only)."""
     kde = next(
         (t for t in grammar_layer.get("preprocess", []) if t.get("type") == "kde"),
@@ -586,7 +587,10 @@ def _heatmap_renderer(grammar_layer):
     return renderer
 
 
-def _cluster_renderer(preprocess, inner_renderer):
+def _cluster_renderer(
+    preprocess: Something,
+    inner_renderer: Something | None,
+) -> QgsPointClusterRenderer:
     """Wrap an inner renderer in a QgsPointClusterRenderer (points only)."""
     cluster = next((t for t in preprocess if t.get("type") == "cluster"), {})
     renderer = QgsPointClusterRenderer()
@@ -1173,7 +1177,9 @@ def grammar_to_raster_renderer(
 # ---------------------------------------------------------------------------
 
 
-def _extract_symbol_style(symbol):
+def _extract_symbol_style(
+    symbol: QgsSymbol | None,
+) -> tuple[list[float], list[float], float, float, str]:
     """Pull (fill, stroke, stroke_width, radius, geometry_type) from a QGIS symbol.
 
     Colors are returned as grammar [r, g, b, a] lists (a in 0-1). The geometry
@@ -1232,17 +1238,21 @@ _COMPARE_OPS = {
 }
 
 
-def _comparison_node(node):
+def _comparison_node(
+    node: QgsExpressionNodeBinaryOperator,
+) -> tuple[str, QgsExpressionNodeBinaryOperator, Any] | None:
     """(field, op, value) for a ``"field" <op> literal`` node, else None.
 
     Uses QGIS's own parsed AST — no string matching.
     """
+    opLeft = node.opLeft()
+    opRight = node.opRight()
     if (
         isinstance(node, QgsExpressionNodeBinaryOperator)
-        and isinstance(node.opLeft(), QgsExpressionNodeColumnRef)
-        and isinstance(node.opRight(), QgsExpressionNodeLiteral)
+        and isinstance(opLeft, QgsExpressionNodeColumnRef)
+        and isinstance(opRight, QgsExpressionNodeLiteral)
     ):
-        return (node.opLeft().name(), node.op(), node.opRight().value())
+        return (opLeft.name(), node.op(), opRight.value())
     return None
 
 
@@ -1286,7 +1296,9 @@ def _classify_leaf_filter(expr: str):
     return None
 
 
-def _node_to_predicate(node):
+def _node_to_predicate(
+    node: QgsExpressionNodeBinaryOperator,
+) -> dict[str, str | int | float]:
     """One grammar `when` predicate from a parsed comparison/function node."""
     # geometry_type($geometry) = 'Point'
     if (
@@ -1331,7 +1343,7 @@ def _node_to_predicate(node):
     return None
 
 
-def _expr_to_when(expr: str):
+def _expr_to_when(expr: str) -> tuple[list[dict[str, str | int | float]], str | None]:
     """Parse a QGIS filter back into grammar `when` predicates + combinator.
 
     Handles the AND/OR-of-comparisons shape we emit; returns (None, None) when
@@ -1376,7 +1388,7 @@ def _scale_linear_args(node):
     return None
 
 
-def _scalar_from_property(prop):
+def _scalar_from_property(prop: QgsProperty) -> tuple[str, list[float], list[float]]:
     """A grammar (field, domain, range) scalar from a ``scale_linear`` QgsProperty."""
     parsed = QgsExpression(prop.expressionString())
     if parsed.hasParserError() or parsed.rootNode() is None:
@@ -1493,7 +1505,7 @@ def _vt_spec_to_style(spec: dict, index: int):
     return style
 
 
-def _vt_style_color(style) -> list:
+def _vt_style_color(style: Something) -> list[Something]:
     """The primary colour of a vector-tile style as a grammar [r, g, b, a] list.
 
     Alpha rides on the symbol colour (``QColor.alphaF()``), not the symbol opacity
@@ -1578,7 +1590,7 @@ def _vt_parse_filter(expr: str):
     return None
 
 
-def _vt_reconstruct(styles) -> tuple:
+def _vt_reconstruct(styles: Something) -> tuple[str, Something]:
     """Fold a geometry's class styles back into one colour instruction.
 
     A single unfiltered style is a constant; several filtered classes rebuild a

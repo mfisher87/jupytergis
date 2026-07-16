@@ -22,6 +22,7 @@ test = [
 typecheck = [
     "mypy",
     "PyQt5-stubs",
+    "qgis-stubs",
     "types-geopandas",
     "types-requests",
 ]

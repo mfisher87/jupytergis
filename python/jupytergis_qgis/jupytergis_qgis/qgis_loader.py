@@ -10,11 +10,12 @@ from typing import Any, cast
 from urllib.parse import unquote
 from uuid import uuid4
 
-from qgis.core import (  # type: ignore[import-untyped]
+from qgis.core import (
     Qgis,
     QgsApplication,
     QgsCoordinateReferenceSystem,
     QgsDataSourceUri,
+    QgsLayerTree,
     QgsLayerTreeGroup,
     QgsLayerTreeLayer,
     QgsMapLayer,
@@ -87,7 +88,7 @@ def qgis_layer_to_jgis(
     layer_type = None
     source_type = None
 
-    layer_parameters: dict[str, dict[str, Any]] = {}
+    layer_parameters: dict[str, float | dict[str, Any]] = {}
     source_parameters: dict[str, list[dict[str, Any]] | str | int | bool] = {}
 
     if isinstance(layer, QgsRasterLayer):
@@ -98,21 +99,21 @@ def qgis_layer_to_jgis(
 
             # Express the renderer as Grammar (symbologyState.layers), the single
             # source of truth post #1390; no OpenLayers `color` array is persisted.
-            renderer = layer.renderer()
+            raster_renderer = layer.renderer()
             provider = layer.dataProvider()
 
-            if isinstance(renderer, QgsMultiBandColorRenderer):
+            if isinstance(raster_renderer, QgsMultiBandColorRenderer):
                 # Multiband RGB -> pixel-red/green/blue band mappings. A band's
                 # contrast stretch (if any) becomes a scalar rescale.
                 bands = {
-                    0: renderer.redBand(),
-                    1: renderer.greenBand(),
-                    2: renderer.blueBand(),
+                    0: raster_renderer.redBand(),
+                    1: raster_renderer.greenBand(),
+                    2: raster_renderer.blueBand(),
                 }
                 enhancements = {
-                    0: renderer.redContrastEnhancement(),
-                    1: renderer.greenContrastEnhancement(),
-                    2: renderer.blueContrastEnhancement(),
+                    0: raster_renderer.redContrastEnhancement(),
+                    1: raster_renderer.greenContrastEnhancement(),
+                    2: raster_renderer.blueContrastEnhancement(),
                 }
                 ranges = {
                     index: (enhancement.minimumValue(), enhancement.maximumValue())
@@ -121,9 +122,9 @@ def qgis_layer_to_jgis(
                     and _is_finite_number(enhancement.minimumValue())
                     and _is_finite_number(enhancement.maximumValue())
                 }
-                # A dedicated alpha/mask band (renderer.alphaBand() is -1 when
+                # A dedicated alpha/mask band (raster_renderer.alphaBand() is -1 when
                 # unset) round-trips as a pixel-alpha mapping.
-                alpha_band = renderer.alphaBand()
+                alpha_band = raster_renderer.alphaBand()
                 layer_parameters["symbologyState"] = multiband_raster_to_grammar(
                     bands,
                     ranges,
@@ -131,15 +132,23 @@ def qgis_layer_to_jgis(
                 )
                 source_min, source_max = _raster_min_max(
                     provider,
-                    renderer.redBand(),
-                    renderer.redContrastEnhancement(),
+                    raster_renderer.redBand(),
+                    raster_renderer.redContrastEnhancement(),
                 )
-            elif isinstance(renderer, QgsSingleBandPseudoColorRenderer):
-                shaderFunc = renderer.shader().rasterShaderFunction()
-                colorList = shaderFunc.colorRampItemList()
-                band = renderer.band()
-                source_min = renderer.classificationMin()
-                source_max = renderer.classificationMax()
+            elif isinstance(raster_renderer, QgsSingleBandPseudoColorRenderer):
+                shader = raster_renderer.shader()
+                if shader is None:
+                    raise RuntimeError("shader is None. This is a bug.")
+
+                shaderFunc = shader.rasterShaderFunction()
+                if shaderFunc is None:
+                    raise RuntimeError("shaderFunc is None. This is a bug.")
+
+                # FIXME: QgsRasterShaderFunction has no attribute colorRampItemList. Looks like a bug.
+                colorList = shaderFunc.colorRampItemList()  # type: ignore[attr-defined]
+                band = raster_renderer.band()
+                source_min = raster_renderer.classificationMin()
+                source_max = raster_renderer.classificationMax()
                 if not (
                     _is_finite_number(source_min) and _is_finite_number(source_max)
                 ):
@@ -150,12 +159,12 @@ def qgis_layer_to_jgis(
                     source_min,
                     source_max,
                 )
-            elif isinstance(renderer, QgsSingleBandGrayRenderer):
-                band = renderer.grayBand()
+            elif isinstance(raster_renderer, QgsSingleBandGrayRenderer):
+                band = raster_renderer.grayBand()
                 source_min, source_max = _raster_min_max(
                     provider,
                     band,
-                    renderer.contrastEnhancement(),
+                    raster_renderer.contrastEnhancement(),
                 )
                 layer_parameters["symbologyState"] = grayscale_raster_to_grammar(band)
             else:
@@ -215,7 +224,10 @@ def qgis_layer_to_jgis(
             # rather than collapsing to the bare basename. Only fall back to the
             # basename when the data sits outside the project tree, to avoid
             # emitting fragile "../" paths.
-            project_dir = QgsProject.instance().absolutePath()
+            project = QgsProject.instance()
+            if project is None:
+                raise RuntimeError("Failed to open project. This is a bug.")
+            project_dir = project.absolutePath()
             src = Path(path_part)
             if project_dir and src.is_absolute():
                 try:
@@ -227,7 +239,7 @@ def qgis_layer_to_jgis(
 
         source_parameters.update(path=file_name)
 
-        renderer = layer.renderer()
+        feature_renderer = layer.renderer()
 
         # The named colour ramp baked into a data-defined CASE is recovered from the
         # layer custom property export stashed it under (the stops alone can't say
@@ -243,7 +255,9 @@ def qgis_layer_to_jgis(
         # Express the QGIS renderer as Grammar (symbologyState.layers), the single
         # source of truth post #1390. Single Symbol / Categorized / Graduated map
         # cleanly; anything else falls back to a default single symbol.
-        symbology_state = _vector_renderer_to_grammar(renderer, ramp_meta)
+        if feature_renderer is None:
+            raise RuntimeError("feature_renderer is None. This is a bug.")
+        symbology_state = _vector_renderer_to_grammar(feature_renderer, ramp_meta)
 
         # Translate the OGR subset string back into a layer-level grammar `when`
         # so feature filters survive the round-trip (best-effort: simple filters).
@@ -274,9 +288,14 @@ def qgis_layer_to_jgis(
             minZoom=min_zoom,
         )
 
-        renderer = layer.renderer()
+        vectortile_renderer = layer.renderer()
+        if vectortile_renderer is None:
+            raise RuntimeError("vectortile_renderer is None. This is a bug.")
+
+        # FIXME: QgsVectorTileRenderer has no attribute styles. Looks like a bug.
+        styles = vectortile_renderer.styles()  # type: ignore[attr-defined]
         styles_by_geom: dict[int, list] = {}
-        for style in renderer.styles():
+        for style in styles:
             styles_by_geom.setdefault(int(style.geometryType()), []).append(style)
         # A line's colour is its "stroke"; polygons/points carry it as "fill".
         geom_styles = {
@@ -329,7 +348,7 @@ def qgis_layer_to_jgis(
 
 
 def qgis_layer_tree_to_jgis(
-    node: QgsLayerTreeGroup,
+    node: QgsLayerTreeGroup | QgsLayerTree,
     layer_tree: list | None = None,
     layers: dict[str, dict[str, Any]] | None = None,
     sources: dict[str, dict[str, Any]] | None = None,
@@ -356,9 +375,9 @@ def qgis_layer_tree_to_jgis(
             qgis_layer_tree_to_jgis(child, _layer_tree, layers, sources, settings)
         elif isinstance(child, QgsLayerTreeLayer):
             if layers is None:
-                raise RuntimeError("layers cannot be None. This is a bug.")
+                raise RuntimeError("layers is None. This is a bug.")
             if sources is None:
-                raise RuntimeError("sources cannot be None. This is a bug.")
+                raise RuntimeError("sources is None. This is a bug.")
 
             layer_id = qgis_layer_to_jgis(child, layers, sources, settings)
             if layer_id is not None:
@@ -442,15 +461,22 @@ def import_project_from_qgis(path: str | Path):
 
     # TODO Silent stdout when creating the project?
     project = QgsProject.instance()
+    if project is None:
+        raise RuntimeError("Failed to open project. This is a bug.")
+
     project.clear()
     project.read(path)
     layer_tree_root = project.layerTreeRoot()
+    if layer_tree_root is None:
+        raise RuntimeError("layer_tree_root is None. This is a bug.")
     qgis_settings = QgsSettings()
     jgis_layer_tree = qgis_layer_tree_to_jgis(layer_tree_root, settings=qgis_settings)
     jgis_layer_tree = _merge_multi_render_layers(jgis_layer_tree)
 
     # extract the viewport in lat/long coordinates
     view_settings = project.viewSettings()
+    if view_settings is None:
+        raise RuntimeError("view_settings is None. This is a bug.")
     map_extent = view_settings.defaultViewExtent()
 
     return {
@@ -548,6 +574,7 @@ def jgis_layer_to_qgis(
     layer_params = layer.get("parameters", {})
     opacity = layer_params.get("opacity", 1.0)
 
+    map_layer: QgsMapLayer
     if layer_type == "RasterLayer" and source_type == "RasterSource":
         source_parameters = source.get("parameters", {})
         uri = build_uri(source_parameters, "RasterSource")
@@ -569,7 +596,11 @@ def jgis_layer_to_qgis(
                 _vt_spec_to_style(spec, index) for index, spec in enumerate(style_specs)
             ]
             renderer = map_layer.renderer()
-            renderer.setStyles([style for style in qgis_styles if style is not None])
+            if renderer is None:
+                raise RuntimeError("renderer is None. This is a bug.")
+
+            # FIXME: QgsVectorTileLayer has no method setStyles. Looks like a bug.
+            renderer.setStyles([style for style in qgis_styles if style is not None])  # type: ignore[attr-defined]
 
         map_layers.append(map_layer)
         layer_opacities.append(opacity)
@@ -587,7 +618,10 @@ def jgis_layer_to_qgis(
         # One QGIS layer per Grammar rendering layer, all sharing the source —
         # this is how QGIS shows several renderings (e.g. points + heatmap) of
         # the same data. A layer with no grammar still gets a default symbol.
-        grammar_layers = symbology_state.get("layers") or [{}]
+        grammar_layers = cast(
+            "list[dict[str, str | list[dict[str, str]]]]",
+            symbology_state.get("layers") or [{}],
+        )
         layer_filter_subset = filters_to_subset(layer.get("filters"))
 
         for grammar_layer in grammar_layers:
@@ -697,11 +731,13 @@ def jgis_layer_group_to_qgis(
     layer_group: list,
     layers: dict[str, dict[str, Any]],
     sources: dict[str, dict[str, Any]],
-    qgisGroup: QgsLayerTreeGroup,
+    qgisGroup: QgsLayerTreeGroup | None,
     project: QgsProject,
     settings: QgsSettings,
     logs: dict[str, list[str]],
 ) -> None:
+    if qgisGroup is None:
+        raise RuntimeError("qgisGroup is None. This is a bug.")
     for item in layer_group:
         if isinstance(item, str):
             # Item is a layer id — may expand to several QGIS layers (one per
@@ -710,6 +746,8 @@ def jgis_layer_group_to_qgis(
             for qgis_layer in qgis_layers:
                 project.addMapLayer(qgis_layer, False)
                 layer = qgisGroup.addLayer(qgis_layer)
+                if layer is None:
+                    raise RuntimeError("layer is None. this is a bug.")
                 layer.setItemVisibilityChecked(layers[item].get("visible", True))
         else:
             # Item is a group
@@ -743,6 +781,9 @@ def export_project_to_qgis(
     # heatmap's old colour ramp survives removeAllMapLayers()/clear() and
     # clobbers the freshly-built renderer on re-export over the same file).
     project = QgsProject.instance()
+    if project is None:
+        raise RuntimeError("Failed to open project. This is a bug.")
+
     project.clear()
     root = project.layerTreeRoot()
 
@@ -773,6 +814,8 @@ def export_project_to_qgis(
     if "options" in virtual_file:
         if "extent" in virtual_file["options"]:
             extent = virtual_file["options"]["extent"]
+            if view_settings is None:
+                raise RuntimeError("view_settings is None. This is a bug.")
             view_settings.setDefaultViewExtent(
                 QgsReferencedRectangle(
                     QgsRectangle(*extent),
